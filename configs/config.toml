@@ -1,0 +1,5 @@
+[dsa]
+host = "0.0.0.0:32803"
+
+[source]
+config = "./settings/sources.json"
