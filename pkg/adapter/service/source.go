@@ -1,26 +1,32 @@
 package adapter
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
 	"unsafe"
 
+	jsoniter "github.com/json-iterator/go"
+
+	grpc_server "github.com/BrobridgeOrg/gravity-adapter-native/pkg/grpc_server"
+	controller "github.com/BrobridgeOrg/gravity-api/service/controller"
 	dsa "github.com/BrobridgeOrg/gravity-api/service/dsa"
 	parallel_chunked_flow "github.com/cfsghost/parallel-chunked-flow"
-	jsoniter "github.com/json-iterator/go"
 	log "github.com/sirupsen/logrus"
 )
 
 //var counter uint64
 
 type Source struct {
-	adapter  *Adapter
-	incoming chan []byte
-	name     string
-	host     string
-	port     int
-	parser   *parallel_chunked_flow.ParallelChunkedFlow
+	adapter    *Adapter
+	incoming   chan []byte
+	name       string
+	host       string
+	port       int
+	grpcServer grpc_server.Server
+	parser     *parallel_chunked_flow.ParallelChunkedFlow
 }
 
 var requestPool = sync.Pool{
@@ -72,6 +78,61 @@ func NewSource(adapter *Adapter, name string, sourceInfo *SourceInfo) *Source {
 	}
 }
 
+func (source *Source) InitSubscription(controllerHost string) error {
+
+	log.WithFields(log.Fields{
+		"source": source.name,
+	}).Info("Register to controller and routing data from synchronizer to dsa.")
+
+	// handle grpc incoming data
+	source.grpcServer = source.adapter.app.GetGRPCServer()
+	eventIncoming := source.grpcServer.GetEventChan()
+	go func() {
+		for {
+			select {
+			case msg := <-eventIncoming:
+				source.incoming <- msg
+			}
+		}
+	}()
+
+	// Register client
+	// Initializing gRPC pool
+	err := source.adapter.app.InitGRPCPool(controllerHost)
+	if err != nil {
+		log.Error("Failed to init grpc pool: ", err)
+		return err
+	}
+	conn, err := source.adapter.app.GetGRPCPool().Get()
+	if err != nil {
+		log.Error("Failed to get connection: ", err)
+		return err
+	}
+
+	client := controller.NewControllerClient(conn)
+
+	// Preparing context
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	registerAdapterRequest := &controller.RegisterAdapterRequest{
+		ClientID: source.adapter.clientName + "-" + source.name,
+		Url:      fmt.Sprintf("%s:%d", source.host, source.port),
+		Offset:   0,
+	}
+	resp, err := client.RegisterAdapter(ctx, registerAdapterRequest)
+	if err != nil {
+		log.Error("Registation failed: ", err)
+		return err
+	}
+	if !resp.Success {
+		log.Error("Registation failed: ", resp.Success)
+		return errors.New(resp.Reason)
+	}
+
+	return nil
+}
+
 func (source *Source) Init() error {
 
 	address := fmt.Sprintf("%s:%d", source.host, source.port)
@@ -82,10 +143,43 @@ func (source *Source) Init() error {
 		"client_name": source.adapter.clientName + "-" + source.name,
 	}).Info("Initializing source connector")
 
+	// Connect to data source
 	go source.eventReceiver()
 	go source.requestHandler()
 
-	// TODO: Connect to data source
+	return source.InitSubscription(address)
+}
+
+func (source *Source) Uninit() error {
+
+	// Unregister client
+	// Initializing gRPC pool
+	log.Info("Connection to controller grpc ...")
+	conn, err := source.adapter.app.GetGRPCPool().Get()
+	if err != nil {
+		log.Error("Failed to get connection: ", err)
+		return err
+	}
+
+	client := controller.NewControllerClient(conn)
+
+	// Preparing context
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	log.Info("Unregister client ...")
+	registerAdapterRequest := &controller.UnregisterAdapterRequest{
+		ClientID: source.adapter.clientName + "-" + source.name,
+	}
+	resp, err := client.UnregisterAdapter(ctx, registerAdapterRequest)
+	if err != nil {
+		log.Error("Unregistation failed: ", err)
+		return err
+	}
+	if !resp.Success {
+		log.Error("Unregistation failed: ", resp.Success)
+		return errors.New(resp.Reason)
+	}
 
 	return nil
 }

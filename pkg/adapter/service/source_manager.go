@@ -63,6 +63,25 @@ func (sm *SourceManager) Initialize() error {
 	return nil
 }
 
+func (sm *SourceManager) Uninitialize() error {
+	config, err := sm.LoadSourceConfig(viper.GetString("source.config"))
+	if err != nil {
+		return err
+	}
+
+	// Uninitializing sources
+	for name, _ := range config.Sources {
+		source := sm.sources[name]
+		err := source.Uninit()
+		if err != nil {
+			log.Error(err)
+		}
+	}
+
+	return nil
+
+}
+
 func (sm *SourceManager) LoadSourceConfig(filename string) (*SourceConfig, error) {
 
 	// Open configuration file

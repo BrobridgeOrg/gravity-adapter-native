@@ -1,3 +1,6 @@
+[service]
+port = 8080
+
 [dsa]
 host = "0.0.0.0:32803"
 
