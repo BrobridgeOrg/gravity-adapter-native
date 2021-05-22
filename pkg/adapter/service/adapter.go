@@ -49,13 +49,3 @@ func (adapter *Adapter) Init() error {
 
 	return nil
 }
-
-func (adapter *Adapter) Uninit() error {
-	err := adapter.sm.Uninitialize()
-	if err != nil {
-		log.Error(err)
-		return err
-	}
-
-	return nil
-}

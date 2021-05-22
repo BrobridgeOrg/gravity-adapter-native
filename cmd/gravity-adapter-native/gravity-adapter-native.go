@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"os/signal"
 	"runtime"
 	"strings"
 
@@ -76,22 +75,6 @@ func main() {
 		return
 	}
 
-	// uninit
-	go func() {
-		sig := make(chan os.Signal, 1)
-		signal.Notify(sig, os.Interrupt, os.Kill)
-		<-sig
-
-		// Call controller to  unregister Client
-		err := a.Uninit()
-		if err != nil {
-			log.Fatal(err)
-			os.Exit(1)
-		}
-
-		log.Info("Bye!")
-		os.Exit(0)
-	}()
 	// Starting application
 	err = a.Run()
 	if err != nil {

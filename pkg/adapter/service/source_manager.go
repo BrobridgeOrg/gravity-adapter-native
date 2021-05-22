@@ -8,20 +8,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-type SourceConfig struct {
-	Sources map[string]SourceInfo `json:"sources"`
-}
-
-type SourceInfo struct {
-	Host                string `json:"host"`
-	Port                int    `json:"port"`
-	Channel             string `json:"channel"`
-	WorkerCount         *int   `json:"worker_count",omitempty`
-	PingInterval        *int64 `json:"ping_interval",omitempty`
-	MaxPingsOutstanding *int   `json:"max_pings_outstanding",omitempty`
-	MaxReconnects       *int   `json:"max_reconnects",omitempty`
-}
-
 type SourceManager struct {
 	adapter *Adapter
 	sources map[string]*Source
@@ -42,15 +28,15 @@ func (sm *SourceManager) Initialize() error {
 	}
 
 	// Initializing sources
-	for name, info := range config.Sources {
+	for name, entry := range config.Sources {
 
 		log.WithFields(log.Fields{
 			"name": name,
-			"host": info.Host,
-			"port": info.Port,
+			"host": entry.Host,
+			"port": entry.Port,
 		}).Info("Initializing source")
 
-		source := NewSource(sm.adapter, name, &info)
+		source := NewSource(sm.adapter, name, NewSourceInfo(&entry))
 		err := source.Init()
 		if err != nil {
 			log.Error(err)
@@ -61,25 +47,6 @@ func (sm *SourceManager) Initialize() error {
 	}
 
 	return nil
-}
-
-func (sm *SourceManager) Uninitialize() error {
-	config, err := sm.LoadSourceConfig(viper.GetString("source.config"))
-	if err != nil {
-		return err
-	}
-
-	// Uninitializing sources
-	for name, _ := range config.Sources {
-		source := sm.sources[name]
-		err := source.Uninit()
-		if err != nil {
-			log.Error(err)
-		}
-	}
-
-	return nil
-
 }
 
 func (sm *SourceManager) LoadSourceConfig(filename string) (*SourceConfig, error) {
