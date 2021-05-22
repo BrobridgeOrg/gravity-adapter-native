@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/BrobridgeOrg/gravity-adapter-native/pkg/app"
+	gravity_store "github.com/BrobridgeOrg/gravity-sdk/core/store"
 	jsoniter "github.com/json-iterator/go"
 	log "github.com/sirupsen/logrus"
 )
@@ -15,6 +16,7 @@ var json = jsoniter.ConfigCompatibleWithStandardLibrary
 type Adapter struct {
 	app        app.App
 	sm         *SourceManager
+	store      *gravity_store.Store
 	clientName string
 }
 
@@ -40,6 +42,12 @@ func (adapter *Adapter) Init() error {
 	host = strings.ReplaceAll(host, ".", "_")
 
 	adapter.clientName = fmt.Sprintf("gravity_adapter_native-%s", host)
+
+	err = adapter.initializeStore()
+	if err != nil {
+		log.Error(err)
+		return nil
+	}
 
 	err = adapter.sm.Initialize()
 	if err != nil {

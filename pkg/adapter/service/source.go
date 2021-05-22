@@ -8,6 +8,7 @@ import (
 
 	"github.com/BrobridgeOrg/gravity-sdk/core"
 	gravity_subscriber "github.com/BrobridgeOrg/gravity-sdk/subscriber"
+	gravity_state_store "github.com/BrobridgeOrg/gravity-sdk/subscriber/state_store"
 	gravity_sdk_types_projection "github.com/BrobridgeOrg/gravity-sdk/types/projection"
 	jsoniter "github.com/json-iterator/go"
 	log "github.com/sirupsen/logrus"
@@ -22,6 +23,7 @@ type Packet struct {
 
 type Source struct {
 	adapter    *Adapter
+	stateStore *gravity_state_store.StateStore
 	subscriber *gravity_subscriber.Subscriber
 
 	name string
@@ -96,6 +98,22 @@ func (source *Source) processData(msg *gravity_subscriber.Message) error {
 	return nil
 }
 
+func (source *Source) InitStateStore() error {
+
+	// Initializing state store
+	options := gravity_state_store.NewOptions()
+	options.Name = source.name
+	stateStore := gravity_state_store.NewStateStoreWithStore(source.adapter.store, options)
+	err := stateStore.Initialize()
+	if err != nil {
+		return err
+	}
+
+	source.stateStore = stateStore
+
+	return nil
+}
+
 func (source *Source) InitSubscription() error {
 
 	// Subscribe to collections
@@ -143,10 +161,15 @@ func (source *Source) Init() error {
 		"address": address,
 	}).Info("Initializing source connector")
 
+	err := source.InitStateStore()
+	if err != nil {
+		return err
+	}
+
 	// Initializing gravity subscriber and connecting to server
 	options := gravity_subscriber.NewOptions()
 	options.Verbose = false
-	//	options.StateStore = subscriber.stateStore
+	options.StateStore = source.stateStore
 	options.WorkerCount = source.info.WorkerCount
 
 	subscriber := gravity_subscriber.NewSubscriber(options)
@@ -154,7 +177,7 @@ func (source *Source) Init() error {
 	opts.PingInterval = time.Second * time.Duration(source.info.PingInterval)
 	opts.MaxPingsOutstanding = source.info.MaxPingsOutstanding
 	opts.MaxReconnects = source.info.MaxReconnects
-	err := subscriber.Connect(address, opts)
+	err = subscriber.Connect(address, opts)
 	if err != nil {
 		return err
 	}

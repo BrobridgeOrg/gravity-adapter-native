@@ -10,8 +10,7 @@
 			"max_reconnects": -1,
 			"worker_count": 16,
 			"collections": [
-				"users",
-				"accounts"
+				"users"
 			]
 		}
 	}

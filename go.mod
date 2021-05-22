@@ -6,7 +6,7 @@ require (
 	github.com/BrobridgeOrg/gravity-adapter-nats v0.0.0-20210103201642-95f4806b99ef
 	github.com/BrobridgeOrg/gravity-api v0.2.14
 	github.com/BrobridgeOrg/gravity-exporter-nats v0.0.0-20210521224753-688f250cd6c7
-	github.com/BrobridgeOrg/gravity-sdk v0.0.8
+	github.com/BrobridgeOrg/gravity-sdk v0.0.9
 	github.com/cfsghost/grpc-connection-pool v0.6.0
 	github.com/cfsghost/parallel-chunked-flow v0.0.3
 	github.com/json-iterator/go v1.1.10
@@ -18,4 +18,4 @@ require (
 	google.golang.org/grpc v1.32.0
 )
 
-replace github.com/BrobridgeOrg/gravity-sdk => ../gravity-sdk
+//replace github.com/BrobridgeOrg/gravity-sdk => ../gravity-sdk
