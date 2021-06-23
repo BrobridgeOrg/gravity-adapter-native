@@ -37,10 +37,19 @@ func (sm *SourceManager) Initialize() error {
 		}).Info("Initializing source")
 
 		source := NewSource(sm.adapter, name, NewSourceInfo(&entry))
+
+		// Initialize subscriber
 		err := source.Init()
 		if err != nil {
 			log.Error(err)
-			continue
+			return err
+		}
+
+		// Run subscriber
+		err = source.Run()
+		if err != nil {
+			log.Error(err)
+			return err
 		}
 
 		sm.sources[name] = source

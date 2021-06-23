@@ -5,15 +5,26 @@ type SourceConfig struct {
 }
 
 type SourceEntry struct {
-	SubscriberID        string    `json:"subscriber_id"`
-	SubscriberName      string    `json:"subscriber_name"`
-	Host                string    `json:"host"`
-	Port                int       `json:"port"`
-	WorkerCount         *int      `json:"worker_count",omitempty`
-	PingInterval        *int64    `json:"ping_interval",omitempty`
-	MaxPingsOutstanding *int      `json:"max_pings_outstanding",omitempty`
-	MaxReconnects       *int      `json:"max_reconnects",omitempty`
-	Collections         *[]string `json:"collections"`
+	SubscriberID        string       `json:"subscriber_id"`
+	SubscriberName      string       `json:"subscriber_name"`
+	Host                string       `json:"host"`
+	Port                int          `json:"port"`
+	WorkerCount         *int         `json:"worker_count",omitempty`
+	PingInterval        *int64       `json:"ping_interval",omitempty`
+	MaxPingsOutstanding *int         `json:"max_pings_outstanding",omitempty`
+	MaxReconnects       *int         `json:"max_reconnects",omitempty`
+	Collections         *[]string    `json:"collections"`
+	Verbose             *bool        `json:"verbose",omitempty`
+	InitialLoad         *bool        `json:"initial_load", omitempty`
+	OmittedCount        *uint64      `json:"omitted_count", omitempty`
+	Events              SourceEvents `json:"events"`
+}
+
+type SourceEvents struct {
+	Snapshot string `json:"snapshot"`
+	Create   string `json:"create"`
+	Update   string `json:"update"`
+	Delete   string `json:"delete"`
 }
 
 type SourceInfo struct {
@@ -26,6 +37,10 @@ type SourceInfo struct {
 	MaxPingsOutstanding int
 	MaxReconnects       int
 	Collections         []string
+	Verbose             bool
+	InitialLoad         bool
+	OmittedCount        uint64
+	Events              SourceEvents
 }
 
 func NewSourceInfo(entry *SourceEntry) *SourceInfo {
@@ -39,7 +54,11 @@ func NewSourceInfo(entry *SourceEntry) *SourceInfo {
 		PingInterval:        10,
 		MaxPingsOutstanding: 3,
 		MaxReconnects:       -1,
+		Verbose:             true,
+		InitialLoad:         true,
+		OmittedCount:        100000,
 		Collections:         make([]string, 0),
+		Events:              entry.Events,
 	}
 
 	// default settings
@@ -57,6 +76,18 @@ func NewSourceInfo(entry *SourceEntry) *SourceInfo {
 
 	if entry.WorkerCount != nil {
 		info.WorkerCount = *entry.WorkerCount
+	}
+
+	if entry.Verbose != nil {
+		info.Verbose = *entry.Verbose
+	}
+
+	if entry.InitialLoad != nil {
+		info.InitialLoad = *entry.InitialLoad
+	}
+
+	if entry.OmittedCount != nil {
+		info.OmittedCount = *entry.OmittedCount
 	}
 
 	if entry.Collections != nil {

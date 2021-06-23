@@ -36,7 +36,7 @@ func (adapter *Adapter) Init() error {
 	host, err := os.Hostname()
 	if err != nil {
 		log.Error(err)
-		return nil
+		return err
 	}
 
 	host = strings.ReplaceAll(host, ".", "_")
@@ -46,13 +46,13 @@ func (adapter *Adapter) Init() error {
 	err = adapter.initializeStore()
 	if err != nil {
 		log.Error(err)
-		return nil
+		return err
 	}
 
 	err = adapter.sm.Initialize()
 	if err != nil {
 		log.Error(err)
-		return nil
+		return err
 	}
 
 	return nil

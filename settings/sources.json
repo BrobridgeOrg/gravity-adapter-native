@@ -8,10 +8,19 @@
 			"ping_interval": 10,
 			"max_pings_outstanding": 3,
 			"max_reconnects": -1,
-			"worker_count": 16,
+			"worker_count": 4,
+			"verbose": true,
+			"initial_load": true,
+			"omitted_count": 100000,
 			"collections": [
 				"users"
-			]
+			],
+			"events": {
+				"snapshot": "accountInitialzed",
+				"create": "accountCreated",
+				"update": "accountUpdated",
+				"delete": "accountDeleted"
+			}
 		}
 	}
 }
