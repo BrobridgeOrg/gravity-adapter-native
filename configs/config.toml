@@ -8,9 +8,9 @@ maxPingsOutstanding = 3
 maxReconnects = -1
 
 [adapter]
-adapter_id = "native_adapter"
-adapter_name = "Native Adapter"
-state_store = "./statestore"
+adapterID = "native_adapter"
+adapterNameame = "Native Adapter"
+stateStore = "./statestore"
 
 [source]
 config = "./settings/sources.json"

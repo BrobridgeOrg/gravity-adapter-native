@@ -8,8 +8,8 @@ import (
 
 func (adapter *Adapter) initializeStore() error {
 
-	viper.SetDefault("adapter.state_store", "./datastore")
-	storePath := viper.GetString("adapter.state_store")
+	viper.SetDefault("adapter.stateStore", "./datastore")
+	storePath := viper.GetString("adapter.stateStore")
 
 	log.WithFields(log.Fields{
 		"path": storePath,
