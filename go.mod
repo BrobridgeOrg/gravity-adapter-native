@@ -10,7 +10,8 @@ require (
 	github.com/nats-io/nats.go v1.10.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/viper v1.7.1
-	golang.org/x/net v0.0.0-20200625001655-4c5254603344
+	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97 // indirect
+	golang.org/x/net v0.0.0-20210226172049-e18ecbb05110
 )
 
 //replace github.com/BrobridgeOrg/gravity-sdk => ../gravity-sdk
