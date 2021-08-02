@@ -12,5 +12,9 @@ adapterID = "native_adapter"
 adapterNameame = "Native Adapter"
 stateStore = "./statestore"
 
+# Authentication
+appID = "anonymous"
+accessKey = ""
+
 [source]
 config = "./settings/sources.json"
