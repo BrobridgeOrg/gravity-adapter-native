@@ -9,6 +9,7 @@
 			"max_pings_outstanding": 3,
 			"max_reconnects": -1,
 			"worker_count": 4,
+			"chunk_size": 2048,
 			"verbose": true,
 			"initial_load": true,
 			"omitted_count": 100000,

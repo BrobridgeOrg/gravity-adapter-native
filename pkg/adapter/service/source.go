@@ -9,8 +9,7 @@ import (
 	"github.com/BrobridgeOrg/gravity-sdk/core"
 	gravity_subscriber "github.com/BrobridgeOrg/gravity-sdk/subscriber"
 	gravity_state_store "github.com/BrobridgeOrg/gravity-sdk/subscriber/state_store"
-	gravity_sdk_types_projection "github.com/BrobridgeOrg/gravity-sdk/types/projection"
-	gravity_sdk_types_snapshot_record "github.com/BrobridgeOrg/gravity-sdk/types/snapshot_record"
+
 	jsoniter "github.com/json-iterator/go"
 	log "github.com/sirupsen/logrus"
 )
@@ -29,12 +28,6 @@ type Source struct {
 
 	name string
 	info *SourceInfo
-}
-
-var projectionPool = sync.Pool{
-	New: func() interface{} {
-		return &gravity_sdk_types_projection.Projection{}
-	},
 }
 
 var packetPool = sync.Pool{
@@ -66,14 +59,8 @@ func (source *Source) processData(msg *gravity_subscriber.Message) error {
 			log.Info(id)
 		}
 	*/
-	pj := projectionPool.Get().(*gravity_sdk_types_projection.Projection)
-	defer projectionPool.Put(pj)
-
-	// Parsing data
-	err := gravity_sdk_types_projection.Unmarshal(msg.Event.Data, pj)
-	if err != nil {
-		return err
-	}
+	event := msg.Payload.(*gravity_subscriber.DataEvent)
+	pj := event.Payload
 
 	// Convert projection to JSON
 	data, err := pj.ToJSON()
@@ -144,6 +131,7 @@ func (source *Source) Init() error {
 	options := gravity_subscriber.NewOptions()
 	options.StateStore = source.stateStore
 	options.WorkerCount = source.info.WorkerCount
+	options.ChunkSize = source.info.ChunkSize
 	options.InitialLoad.Enabled = source.info.InitialLoad
 	options.InitialLoad.OmittedCount = source.info.OmittedCount
 	options.Verbose = source.info.Verbose
@@ -204,16 +192,11 @@ func (source *Source) eventHandler(msg *gravity_subscriber.Message) {
 
 func (source *Source) snapshotHandler(msg *gravity_subscriber.Message) {
 
-	// Parsing snapshot record
-	var snapshotRecord gravity_sdk_types_snapshot_record.SnapshotRecord
-	err := gravity_sdk_types_snapshot_record.Unmarshal(msg.Snapshot.Data, &snapshotRecord)
-	if err != nil {
-		log.Error(err)
-		return
-	}
+	event := msg.Payload.(*gravity_subscriber.SnapshotEvent)
+	snapshotRecord := event.Payload
 
 	eventName := source.info.Events.Snapshot
-	payload, err := jsoniter.Marshal(&snapshotRecord.Payload)
+	payload, err := snapshotRecord.Payload.MarshalJSON()
 	if err != nil {
 		log.Error(err)
 		return
@@ -227,7 +210,6 @@ func (source *Source) snapshotHandler(msg *gravity_subscriber.Message) {
 			time.Sleep(time.Second)
 			continue
 		}
-
 		break
 	}
 

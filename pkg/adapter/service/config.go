@@ -10,6 +10,7 @@ type SourceEntry struct {
 	Host                string       `json:"host"`
 	Port                int          `json:"port"`
 	WorkerCount         *int         `json:"worker_count",omitempty`
+	ChunkSize           *int         `json:"chunk_size",omitempty`
 	PingInterval        *int64       `json:"ping_interval",omitempty`
 	MaxPingsOutstanding *int         `json:"max_pings_outstanding",omitempty`
 	MaxReconnects       *int         `json:"max_reconnects",omitempty`
@@ -33,6 +34,7 @@ type SourceInfo struct {
 	Host                string
 	Port                int
 	WorkerCount         int
+	ChunkSize           int
 	PingInterval        int64
 	MaxPingsOutstanding int
 	MaxReconnects       int
@@ -50,7 +52,8 @@ func NewSourceInfo(entry *SourceEntry) *SourceInfo {
 		SubscriberName:      entry.SubscriberName,
 		Host:                entry.Host,
 		Port:                entry.Port,
-		WorkerCount:         16,
+		WorkerCount:         4,
+		ChunkSize:           2048,
 		PingInterval:        10,
 		MaxPingsOutstanding: 3,
 		MaxReconnects:       -1,
@@ -76,6 +79,10 @@ func NewSourceInfo(entry *SourceEntry) *SourceInfo {
 
 	if entry.WorkerCount != nil {
 		info.WorkerCount = *entry.WorkerCount
+	}
+
+	if entry.ChunkSize != nil {
+		info.ChunkSize = *entry.ChunkSize
 	}
 
 	if entry.Verbose != nil {
